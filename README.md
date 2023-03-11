@@ -8,7 +8,7 @@ Added script: **train_test_splitter.py**
 * **2** : Train U2Net on training set data, evaluate on test set using IoU, record the results.
   Added script: **infer_and_measure.py**. 
   Produced file **metrics.csv**
-  Added script **calculate_iou.py** to callculate final **iOU** with **JaccardIndex** method
+  Added script **calculate_iou.py** to callculate final **iOU** with **JaccardIndex** method: **0.45947448796658585**
 
 * **3** : Cut TopFormer NN from its repo towards cloth-segmentation pipeline of training and evaluatio.
   Added script: **TopFormer** to networks module
