@@ -1,43 +1,60 @@
-# U2NET cs TopFormer #
+# U2NET vs TopFormer #
 
-# Milestones
+# Solution plan:
 
-* **U2NET** : This project uses an amazing [U2NET](https://arxiv.org/abs/2005.09007) as a deep learning model. Instead of having 1 channel output from u2net for typical salient object detection task it outputs 4 channels each respresting upper body cloth, lower body cloth, fully body cloth and background. Only categorical cross-entropy loss is used for a given version of the checkpoint.
+* **1** : Split labeled data to train and test set for fine-tuning and evaluation purposes.
+Added script: **train_test_splitter.py**
 
-* **Dataset** : U2net is trained on 45k images [iMaterialist (Fashion) 2019 at FGVC6](https://www.kaggle.com/c/imaterialist-fashion-2019-FGVC6/data) dataset. To reduce complexity, I have clubbed the original 42 categories from dataset labels into 3 categories (upper body, lower body and full body). All images are resized into square `¯\_(ツ)_/¯` 768 x 768 px for training. (This experiment was conducted with 768 px but around 384 px will work fine too if one is retraining on another dataset).
+* **2** : Train U2Net on training set data, evaluate on test set using IoU, record the results.
+  Added script: **infer_and_measure.py**. 
+  Produced file **metrics.csv**
+  Added script **calculate_iou.py** to callculate final **iOU** with **JaccardIndex** method
 
-# Training 
+* **3** : Cut TopFormer NN from its repo towards cloth-segmentation pipeline of training and evaluatio.
+  Added script: **TopFormer** to networks module
+  
+* **4** : Train TopFormer NN on training set data, evaluate on test set using IoU, record the results.
+  **STUCK**
+  
+* **5** : Compare the results and produce report
+  **STUCK**
 
-- For training this project requires,
-<ul>
-    <ul>
-    <li>&nbsp; PyTorch > 1.3.0</li>
-    <li>&nbsp; tensorboardX</li>
-    <li>&nbsp; gdown</li>
-    </ul>
-</ul>
+# STUCK
+Stuck on part 3 due to complexity of disentangling of all the parts related to NN (backbone, head, optimizer, loss, configurations) from the codebase.
+The main issue with TopFormer repo was difficulty in transferring Topformer neural network to cloth-segmentation repo. There are already useful scripts in cloth-segmentation repo related to dataset preprocessing (loading annotations from csv into tensor format, image preprocessing), training loop and inference as well as IoU calculations. The plan was to leverage those scripts with the TopFormer model instead of transferring the lot to the training and testing routine of Topformer library. There were 4 places of train script that needed to be modified: model definition, optimizer, loss and weights initialization. Model definition took a lot of effort, as in the TopFormer library the model is built via Registry from its backbone, head, configs, optimizer and loss. I ran out of time as I was refactoring the model to enable using the training script of cloth-segmentation repo. However, given several more days, I am confident that I would have been able to transfer the model and quickly finish points 4-5 of the plan.
 
-- Download dataset from this [link](https://www.kaggle.com/c/imaterialist-fashion-2019-FGVC6/data), extract all items.
-- Set path of `train` folder which contains training images and `train.csv` which is label csv file in `options/base_options.py`
-- To port original u2net of all layer except last layer please run `python setup_model_weights.py` and it will generate weights after model surgey in `prev_checkpoints` folder.
-- You can explore various options in `options/base_options.py` like checkpoint saving folder, logs folder etc.
-- For single gpu set `distributed = False` in `options/base_options.py`, for multi gpu set it to `True`.
-- For single gpu run `python train.py`
-- For multi gpu run <br>
-&nbsp;`python -m torch.distributed.launch --nnodes=1 --node_rank=0 --nproc_per_node=4 --use_env train.py` <br>
-Here command is for single node, 4 gpu. Tested only for single node.
-- You can watch loss graphs and samples in tensorboard by running tensorboard command in log folder.
+# Part 2
+Check the “Dress Code” dataset. Based on the annotations offered by this dataset which include landmarks, segments and skeleton - do you believe training with that dataset would give better results than the one you’ve had with the TopFormer model? Explain why.
+
+I believe that more data is better than less data. Sensor fusion approaches are successfully and extensively used in autonomous vehicles and there are experiments in the field of transformers and multi-modal learning (e.g. https://arxiv.org/pdf/2206.06488.pdf). With extra annotations containing information on human dense pose, keypoints and skeleton, we could leverage those as inputs to a neural network combining the information from annotations to arrive at a prediction regarding the segmentation to hopefully achieve better quality than from raw image alone. My intuition is that by doing so we would augment the perception of neural networks with the things that we humans know about the person on an image like pose or keypoints.
+
+# Bonus Question
+1. Quantization
+   Quantization is primarily a technique to speed up inference and only the forward pass is supported for quantized operators. PyTorch supports multiple approaches to quantizing a deep learning model. In most cases the model is trained in FP32 and then the model is converted to INT8.
+   https://pytorch.org/docs/stable/quantization.html
+
+2. Knowledge distillation
+   Knowledge distillation refers to the process of transferring knowledge from a large model to a smaller one.
+
+3. Pruning:
+   Neural network pruning is a method of compressing a model by removing some of the parameters. 
+   Pruning, like quantization, can be used before, after and during training.
+   The easiest way to prune a neural network is under the hood of PyTorch, and it is implemented with just one line of code.
+
+    torch.nn.utils.prune.random_unstructed(module , name = ‘weight’ , amount = 0.3)
+
+4. Combination of 1-3
 
 
-# Testing/Inference
-- Download pretrained model from this [link](https://drive.google.com/file/d/1mhF3yqd7R-Uje092eypktNl-RoZNuiCJ/view?usp=sharing)(165 MB) in `trained_checkpoint` folder.
-- Put input images in `input_images` folder
-- Run `python infer.py` for inference.
-- Output will be saved in `output_images`
-### OR 
-- Inference in colab from here [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1EhEy3uQh-5oOSagUotVOJAf8m7Vqn0D6?usp=sharing)
+5. iOS Convert PyTorch to CoreML
+   iOS feature, converts PyTorch to CoreMLL.
+   https://coremltools.readme.io/docs/pytorch-conversion
 
-# Acknowledgements
-- U2net model is from original [u2net repo](https://github.com/xuebinqin/U-2-Net). Thanks to Xuebin Qin for amazing repo.
-- Complete repo follows structure of [Pix2pixHD repo](https://github.com/NVIDIA/pix2pixHD)
 
+6. TFLight on Android
+
+
+7. PyTorch Mobile
+   Converts PyTorch models directly for mobile using:
+   https://pytorch.org/mobile/home/
+   
