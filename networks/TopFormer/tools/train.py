@@ -64,7 +64,7 @@ def parse_args():
 
 
 def main():
-    args = parse_args()
+    # args = parse_args()
 
     cfg = Config.fromfile(args.config)
     if args.options is not None:
